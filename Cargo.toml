@@ -1,9 +1,9 @@
 [workspace]
-members = ["crates/polaris-tx-stream-protocol", "crates/polaris-tx-stream-client", "examples/subscribe-resolved"]
+members = ["crates/polaris-tx-stream-protocol", "crates/polaris-tx-stream-client", "examples/subscribe-resolved", "examples/subscribe-transactions"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 edition = "2021"
 license = "MIT"
 rust-version = "1.95"
@@ -12,5 +12,5 @@ rust-version = "1.95"
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt", "time", "net", "sync"] }
 tonic = { version = "0.14.5", features = ["transport", "tls-ring", "tls-webpki-roots"] }
-polaris-tx-stream-protocol = { path = "crates/polaris-tx-stream-protocol", version = "0.1.0-rc.1" }
-polaris-tx-stream-client = { path = "crates/polaris-tx-stream-client", version = "0.1.0-rc.1" }
+polaris-tx-stream-protocol = { path = "crates/polaris-tx-stream-protocol", version = "0.1.0-rc.2" }
+polaris-tx-stream-client = { path = "crates/polaris-tx-stream-client", version = "0.1.0-rc.2" }

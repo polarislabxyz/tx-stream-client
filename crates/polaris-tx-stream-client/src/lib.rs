@@ -11,8 +11,10 @@ pub mod v1 {
     tonic::include_proto!("polaris.solana.fastpath.v1");
 }
 pub mod filter;
+pub mod observations;
 pub mod reconnect;
 pub use filter::ResolvedFilter;
+pub use observations::{TransactionObservation, TransactionStream, UnresolvedTransaction};
 pub use polaris_tx_stream_protocol as protocol;
 type WireClient = v1::solana_transaction_fastpath_client::SolanaTransactionFastpathClient<Channel>;
 
@@ -24,6 +26,8 @@ pub enum Error {
     InvalidEndpoint,
     #[error("invalid transport configuration")]
     InvalidConfig,
+    #[error("invalid transaction observation: {0}")]
+    InvalidObservation(&'static str),
     #[error("invalid filter: {0}")]
     InvalidFilter(&'static str),
     #[error("transport connection failed: {0}")]
@@ -65,6 +69,10 @@ pub struct TransportConfig {
     pub keepalive_timeout: Duration,
     pub tcp_keepalive: Duration,
     pub max_message_bytes: usize,
+    /// Adaptive HTTP/2 windows override the initial window sizes in Hyper.
+    pub http2_adaptive_window: bool,
+    pub initial_stream_window_size: u32,
+    pub initial_connection_window_size: u32,
 }
 impl Default for TransportConfig {
     fn default() -> Self {
@@ -75,6 +83,9 @@ impl Default for TransportConfig {
             keepalive_timeout: Duration::from_secs(10),
             tcp_keepalive: Duration::from_secs(30),
             max_message_bytes: 16 * 1024,
+            http2_adaptive_window: true,
+            initial_stream_window_size: 32 * 1024 * 1024,
+            initial_connection_window_size: 32 * 1024 * 1024,
         }
     }
 }
@@ -82,6 +93,7 @@ impl Default for TransportConfig {
 #[derive(Clone)]
 pub struct FastpathClient {
     wire: WireClient,
+    observations: v1::transaction_stream_client::TransactionStreamClient<Channel>,
     key: ApiKey,
     config: TransportConfig,
 }
@@ -101,6 +113,10 @@ impl FastpathClient {
             || config.http2_keepalive.is_zero()
             || config.keepalive_timeout.is_zero()
             || config.tcp_keepalive.is_zero()
+            || config.initial_stream_window_size == 0
+            || config.initial_stream_window_size > 0x7fff_ffff
+            || config.initial_connection_window_size == 0
+            || config.initial_connection_window_size > 0x7fff_ffff
         {
             return Err(Error::InvalidConfig);
         }
@@ -110,7 +126,9 @@ impl FastpathClient {
             .connect_timeout(config.connect_timeout)
             .tcp_nodelay(true)
             .tcp_keepalive(Some(config.tcp_keepalive))
-            .http2_adaptive_window(true)
+            .initial_stream_window_size(config.initial_stream_window_size)
+            .initial_connection_window_size(config.initial_connection_window_size)
+            .http2_adaptive_window(config.http2_adaptive_window)
             .http2_keep_alive_interval(config.http2_keepalive)
             .keep_alive_timeout(config.keepalive_timeout);
         Ok(Self::from_channel(endpoint.connect().await?, key, config))
@@ -118,12 +136,38 @@ impl FastpathClient {
     /// Advanced callers own TLS and connection settings for this channel.
     pub fn from_channel(channel: Channel, key: ApiKey, config: TransportConfig) -> Self {
         Self {
+            observations: v1::transaction_stream_client::TransactionStreamClient::new(
+                channel.clone(),
+            )
+            .max_decoding_message_size(config.max_message_bytes)
+            .max_encoding_message_size(512 * 1024),
             wire: WireClient::new(channel)
                 .max_decoding_message_size(config.max_message_bytes)
                 .max_encoding_message_size(512 * 1024),
             key,
             config,
         }
+    }
+    /// Broader immediate stream, including transactions whose LUTs are unresolved.
+    /// Unresolved account filters match static keys only; use `match_all` for coverage.
+    pub async fn subscribe_transactions(
+        &mut self,
+        filter: ResolvedFilter,
+    ) -> Result<TransactionStream, Error> {
+        let mode = filter.mode();
+        let mut request = Request::new(filter.into_request());
+        request
+            .metadata_mut()
+            .insert("x-api-key", self.key.0.clone());
+        let stream = tokio::time::timeout(
+            self.config.subscribe_timeout,
+            self.observations.subscribe_transactions(request),
+        )
+        .await
+        .map_err(|_| Error::SubscribeTimeout)?
+        .map_err(|status| Error::Status(status.code()))?
+        .into_inner();
+        Ok(TransactionStream::new(stream, mode))
     }
     pub async fn subscribe(&mut self, filter: ResolvedFilter) -> Result<FastpathStream, Error> {
         let mode = filter.mode();
