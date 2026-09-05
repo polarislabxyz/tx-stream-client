@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package polaris.solana.fastpath.v1;
+
+service SolanaTransactionFastpath {
+  rpc SubscribeResolvedTransactions(SubscribeResolvedTransactionsRequest)
+      returns (stream ResolvedTransactionFrame);
+}
+
+message ResolvedTransactionFilter {
+  optional bool vote = 1;
+  repeated bytes account_include = 2;
+  repeated bytes account_exclude = 3;
+  repeated bytes account_required = 4;
+}
+
+message SubscribeResolvedTransactionsRequest {
+  repeated ResolvedTransactionFilter filters = 1;
+}
+
+message ResolvedTransactionFrame {
+  bytes canonical_v1 = 1;
+}

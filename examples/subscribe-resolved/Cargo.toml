@@ -1,0 +1,11 @@
+[package]
+name = "subscribe-resolved"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+polaris-tx-stream-client.workspace = true
+tokio.workspace = true
+bs58 = "0.5"

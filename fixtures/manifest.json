@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "source_commit": "12f8b4ca62f4be5e84f1a46317523b8f111c8ef5",
+  "files": {
+    "crates/polaris-tx-stream-protocol/src/frame.rs": {
+      "size": 27541,
+      "sha256": "b6dc292c7ec23297d15ace6be34133db3d7d74fd1be7e745036f6f773f7292b6"
+    },
+    "crates/polaris-tx-stream-protocol/src/layout.rs": {
+      "size": 259,
+      "sha256": "c82bab3d141479817d93007ab23a8a2c89179c9558526c654037304b42e63a8b"
+    },
+    "crates/polaris-tx-stream-protocol/src/stream.rs": {
+      "size": 5253,
+      "sha256": "f94044985eb8fe0c717cce18a400bd93027c964e1f7d6401d27a1c99c4e569bd"
+    },
+    "crates/polaris-tx-stream-protocol/src/transaction.rs": {
+      "size": 29374,
+      "sha256": "20f75759d6988ed89eea6c3da3302be4e0808f860c2947084b8ee9b74a17ace2"
+    },
+    "crates/polaris-tx-stream-protocol/src/wire.rs": {
+      "size": 5720,
+      "sha256": "16941ac3b9340bf10d416ee4d1ad5fb6e44bb472332e941fe291f36e5e763c8f"
+    },
+    "crates/polaris-tx-stream-protocol/tests/frame_validation.rs": {
+      "size": 17252,
+      "sha256": "13ccd75f5f3bfd4216cbf744a700518abdab4cd2b1855024a32fcf3c9adf0de8"
+    },
+    "fixtures/canonical-v1-legacy.bin": {
+      "size": 432,
+      "sha256": "b0a6bf253b2063d57ce86fa890d4f4f9fbe58c2c2f8c216dd52ac6bb71a48ed8"
+    },
+    "fixtures/canonical-v1-v0-lut.bin": {
+      "size": 704,
+      "sha256": "066b6542f2293c328d40ea4d5687e60ca2a531f1fd89a7b850c3e12fa805590f"
+    },
+    "fixtures/canonical-v1-v1.bin": {
+      "size": 440,
+      "sha256": "20ab603ef9839500f501a3dc89c24f38dadd3b9ad44a6473dc353db56d642126"
+    },
+    "fixtures/transactions/legacy.bin": {
+      "size": 173,
+      "sha256": "a19220ff73c85abc849483d3598354e9a620bad630778cfd0a3b128a332df510"
+    },
+    "fixtures/transactions/v0_lookup_free.bin": {
+      "size": 175,
+      "sha256": "cafb3cfd0c49c5b324722c7e51cb89528f3ad2ee41228e7907d6781f7507578d"
+    },
+    "fixtures/transactions/v0_multi_lut.bin": {
+      "size": 253,
+      "sha256": "6bb9cbaac6b4174f37562cdf954c3df97ca127c0d22cfbd303d5b938d38a9a93"
+    },
+    "fixtures/transactions/v1_1233.bin": {
+      "size": 1233,
+      "sha256": "67896eebcabc483acd87d08bfeae451ee35043e8d330da79538755e50a22b266"
+    },
+    "fixtures/transactions/v1_4096.bin": {
+      "size": 4096,
+      "sha256": "3e5a5fcb4f143afd901e85737bffa054a3f86e2767dfa3cc67641c9d24c492a7"
+    },
+    "fixtures/transactions/v1_4097.bin": {
+      "size": 4097,
+      "sha256": "a5e7c2ad30b56a5892746f570f64390014f190177b9b19d2a12e32ed67b958aa"
+    },
+    "fixtures/transactions/v1_all_config.bin": {
+      "size": 198,
+      "sha256": "5fd569dd78c016ea2107968f9ab42d9890709bff7743e0a74b65f4cc2a4c3758"
+    },
+    "fixtures/transactions/v1_default.bin": {
+      "size": 178,
+      "sha256": "6707e7a0c7d59f0a213202f2162733e248ef83e833b61375ecf0df9e45bb33b1"
+    },
+    "fixtures/transactions/v1_truncated.bin": {
+      "size": 4095,
+      "sha256": "b7812848be9697024fa5d8080b058e5ddb49a71da5a783b0efbf58e513935f4e"
+    },
+    "proto/fastpath.proto": {
+      "size": 562,
+      "sha256": "e3267def17fd1d5f8c111ad99de93d65e8fa416891c9360a1e53d26f07ec957c"
+    }
+  }
+}
