@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "12f8b4ca62f4be5e84f1a46317523b8f111c8ef5",
+  "source_commit": "689f4e9fd64c273e815aa8d00a21d021a134f3f9",
   "files": {
     "crates/polaris-tx-stream-protocol/src/frame.rs": {
       "size": 27541,
@@ -75,8 +75,8 @@
       "sha256": "b7812848be9697024fa5d8080b058e5ddb49a71da5a783b0efbf58e513935f4e"
     },
     "proto/fastpath.proto": {
-      "size": 562,
-      "sha256": "e3267def17fd1d5f8c111ad99de93d65e8fa416891c9360a1e53d26f07ec957c"
+      "size": 1475,
+      "sha256": "b4acb9050fd1045c7c7d145189cac5faf08516a0f8b199323f68a91abf79d479"
     }
   }
 }

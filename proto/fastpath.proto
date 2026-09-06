@@ -21,3 +21,29 @@ message SubscribeResolvedTransactionsRequest {
 message ResolvedTransactionFrame {
   bytes canonical_v1 = 1;
 }
+
+// Broader observation product. Existing exact-resolved subscribers are unchanged.
+service TransactionStream {
+  rpc SubscribeTransactions(SubscribeResolvedTransactionsRequest)
+      returns (stream TransactionFrame);
+}
+
+// One immediate observation per transaction. Account filters match known keys:
+// static plus loaded keys for canonical frames, static keys for unresolved ones.
+// Empty filters deliver all observed transactions, including failed LUT loads.
+// Arrival order is not slot order; this stream does not assert execution/finality.
+message TransactionFrame {
+  oneof payload {
+    bytes canonical_v1 = 1;
+    UnresolvedTransaction unresolved = 2;
+  }
+}
+
+message UnresolvedTransaction {
+  uint64 producer_epoch = 1;
+  uint64 structural_sequence = 2;
+  uint64 slot = 3;
+  bytes transaction = 4;
+  // Bounded producer outcome name. Missing addresses must never be zero-filled.
+  string reason = 5;
+}

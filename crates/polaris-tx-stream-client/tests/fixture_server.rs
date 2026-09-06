@@ -171,3 +171,88 @@ async fn oversized_server_message_is_rejected_before_decoding_frame() {
     assert!(stream.next().await.is_none());
     server.abort();
 }
+
+#[derive(Clone)]
+struct ObservationFixture(Vec<TransactionFrame>);
+#[tonic::async_trait]
+impl transaction_stream_server::TransactionStream for ObservationFixture {
+    type SubscribeTransactionsStream =
+        tokio_stream::Iter<std::vec::IntoIter<Result<TransactionFrame, Status>>>;
+    async fn subscribe_transactions(
+        &self,
+        request: Request<SubscribeResolvedTransactionsRequest>,
+    ) -> Result<Response<Self::SubscribeTransactionsStream>, Status> {
+        assert_eq!(request.metadata().get("x-api-key").unwrap(), "test-secret");
+        Ok(Response::new(tokio_stream::iter(
+            self.0.clone().into_iter().map(Ok).collect::<Vec<_>>(),
+        )))
+    }
+}
+
+#[tokio::test]
+async fn broader_stream_delivers_raw_bytes_and_terminates_on_duplicate_identity() {
+    use polaris_tx_stream_client::TransactionObservation;
+    let canonical = frame();
+    let epoch = polaris_tx_stream_client::protocol::CanonicalFrameRef::parse(&canonical)
+        .unwrap()
+        .header()
+        .producer_epoch;
+    let raw = UnresolvedTransaction {
+        producer_epoch: epoch,
+        structural_sequence: 99,
+        slot: 424200,
+        transaction: include_bytes!("../../../fixtures/transactions/v0_multi_lut.bin").to_vec(),
+        reason: "table_missing".into(),
+    };
+    let observation = TransactionFrame {
+        payload: Some(transaction_frame::Payload::Unresolved(raw.clone())),
+    };
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        tonic::transport::Server::builder()
+            .add_service(transaction_stream_server::TransactionStreamServer::new(
+                ObservationFixture(vec![
+                    TransactionFrame {
+                        payload: Some(transaction_frame::Payload::CanonicalV1(canonical)),
+                    },
+                    observation.clone(),
+                    observation,
+                ]),
+            ))
+            .serve_with_incoming(TcpListenerStream::new(listener))
+            .await
+            .unwrap();
+    });
+    let channel = tonic::transport::Endpoint::from_shared(format!("http://{address}"))
+        .unwrap()
+        .connect()
+        .await
+        .unwrap();
+    let mut client = FastpathClient::from_channel(
+        channel,
+        ApiKey::new("test-secret").unwrap(),
+        TransportConfig::default(),
+    );
+    let mut stream = client
+        .subscribe_transactions(ResolvedFilter::match_all())
+        .await
+        .unwrap();
+    assert!(matches!(
+        stream.next().await,
+        Some(Ok(TransactionObservation::Resolved(_)))
+    ));
+    let Some(Ok(TransactionObservation::Unresolved(received))) = stream.next().await else {
+        panic!("expected unresolved");
+    };
+    assert_eq!(received.transaction_bytes(), raw.transaction);
+    assert_eq!(received.slot(), 424200);
+    assert_eq!(received.reason(), "table_missing");
+    assert!(received.transaction().num_address_table_lookups() > 0);
+    assert!(matches!(
+        stream.next().await,
+        Some(Err(Error::InvalidObservation(_)))
+    ));
+    assert!(stream.next().await.is_none());
+    server.abort();
+}
